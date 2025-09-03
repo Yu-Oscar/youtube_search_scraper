@@ -46,7 +46,7 @@ A Chrome extension for scraping and managing YouTube search results with modern 
 
 1. **Download the Extension**
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/Yu-Oscar/youtube_search_scraper
    cd youtube_search_scraper
    ```
 

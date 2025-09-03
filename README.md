@@ -47,7 +47,7 @@ A Chrome extension for scraping and managing YouTube search results with modern 
 1. **Download the Extension**
    ```bash
    git clone [repository-url]
-   cd vibe_coding_influencers_db
+   cd youtube_search_scraper
    ```
 
 2. **Load in Chrome**

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir)",
+      "Bash(del background.js)",
+      "Read(C:\\Users\\oscar\\Downloads/**)",
+      "Bash(start viewer.html)",
+      "Bash(del \"C:\\Users\\oscar\\Documents\\GitHub\\vibe_coding_influencers_db\\background.js\")",
+      "Bash(del nul)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

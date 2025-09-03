@@ -1,0 +1,583 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>YouTube Search Data Viewer</title>
+  <style>
+    * { box-sizing: border-box; }
+    
+    body { 
+      font: 15px/1.6 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
+      margin: 0; 
+      padding: 32px 24px;
+      background: linear-gradient(145deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: #e8e9ed;
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 25% 25%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 75% 75%, rgba(255, 119, 198, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    
+    h1 { 
+      text-align: center;
+      margin-bottom: 48px; 
+      font-size: 36px; 
+      font-weight: 800;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    
+    
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      font-size: 12px;
+      color: #ccc;
+      font-weight: 500;
+    }
+    
+    input, select {
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #e8e9ed;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: rgba(102, 126, 234, 0.5);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: rgba(255,255,255,0.08);
+    }
+    
+    input::placeholder {
+      color: #777;
+    }
+    
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .video-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    
+    .video-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #64b5f6, #42a5f5);
+    }
+    
+    .video-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .video-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .video-title a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .video-title a:hover {
+      color: #64b5f6;
+    }
+    
+    .channel-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding: 8px 0;
+    }
+    
+    .channel-name {
+      font-weight: 600;
+      color: #64b5f6;
+      font-size: 14px;
+    }
+    
+    .channel-name a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .channel-name a:hover {
+      color: #90caf9;
+      text-decoration: underline;
+    }
+    
+    .channel-handle {
+      color: #888;
+      font-size: 12px;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    
+    .video-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+    
+    .stat-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+    
+    .stat-value {
+      color: #e0e0e0;
+      font-weight: 500;
+    }
+    
+    .video-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #888;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .batch-query {
+      background: rgba(255, 152, 0, 0.2);
+      color: #ffb74d;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    
+    .load-button {
+      display: block;
+      margin: 32px auto;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .load-button:hover {
+      background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+    
+    .no-data {
+      text-align: center;
+      color: #888;
+      font-size: 16px;
+      margin: 40px 0;
+    }
+    
+    .loading {
+      text-align: center;
+      color: #64b5f6;
+      font-size: 16px;
+      margin: 40px 0;
+    }
+    
+    .sort-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .sort-button {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #d1d5db;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .sort-button:hover, .sort-button.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: rgba(102, 126, 234, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats {
+        gap: 20px;
+      }
+      
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      
+      .filter-group {
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📺 YouTube Search Data Viewer</h1>
+    
+    <button class="load-button" id="load-data">Load Data from JSON File</button>
+    <input type="file" id="file-input" accept=".json" style="display: none;">
+    
+    <div id="controls" style="display: none;">
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search:</label>
+          <input type="text" id="search-filter" placeholder="Search videos, channels..." />
+        </div>
+        <div class="filter-group">
+          <label>Min Views:</label>
+          <input type="text" id="views-filter" placeholder="1K, 1M, etc." />
+        </div>
+        <div class="filter-group">
+          <label>Subscribers:</label>
+          <input type="text" id="subs-min" placeholder="Min (1K, 10K, etc.)" value="10K" style="width: 120px;" />
+          <span style="color: #888; margin: 0 5px;">to</span>
+          <input type="text" id="subs-max" placeholder="Max (1M, 10M, etc.)" value="100K" style="width: 120px;" />
+        </div>
+        <div class="filter-group">
+          <label>Batch Query:</label>
+          <select id="batch-filter">
+            <option value="">All</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="sort-controls">
+        <span style="color: #888; font-size: 12px;">Sort by:</span>
+        <button class="sort-button active" data-sort="title">Title</button>
+        <button class="sort-button" data-sort="channel">Channel</button>
+        <button class="sort-button" data-sort="views">Views</button>
+        <button class="sort-button" data-sort="subscribers">Subscribers</button>
+        <button class="sort-button" data-sort="addedAt">Date Added</button>
+        <span id="filter-count" style="color: #64b5f6; font-size: 12px; margin-left: 20px;"></span>
+      </div>
+    </div>
+    
+    <div class="loading" id="loading" style="display: none;">Loading data...</div>
+    <div class="no-data" id="no-data">Click "Load Data from JSON File" to get started</div>
+    
+    <div class="video-grid" id="video-grid"></div>
+  </div>
+  
+  <script>
+    let allVideos = [];
+    let filteredVideos = [];
+    let currentSort = 'title';
+    
+    // File loading
+    document.getElementById('load-data').addEventListener('click', () => {
+      document.getElementById('file-input').click();
+    });
+    
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/json') {
+        loadJsonFile(file);
+      }
+    });
+    
+    function loadJsonFile(file) {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('no-data').style.display = 'none';
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          allVideos = JSON.parse(e.target.result);
+          if (Array.isArray(allVideos) && allVideos.length > 0) {
+            initializeViewer();
+          } else {
+            document.getElementById('no-data').textContent = 'No video data found in JSON file';
+            document.getElementById('no-data').style.display = 'block';
+          }
+        } catch (error) {
+          document.getElementById('no-data').textContent = 'Error parsing JSON file';
+          document.getElementById('no-data').style.display = 'block';
+        }
+        document.getElementById('loading').style.display = 'none';
+      };
+      reader.readAsText(file);
+    }
+    
+    function initializeViewer() {
+      document.getElementById('controls').style.display = 'block';
+      document.getElementById('no-data').style.display = 'none';
+      
+      populateBatchFilter();
+      filteredVideos = [...allVideos];
+      applyFilters(); // Apply default filters including 10K-100K range
+      
+      // Set up filters
+      document.getElementById('search-filter').addEventListener('input', applyFilters);
+      document.getElementById('views-filter').addEventListener('input', applyFilters);
+      document.getElementById('subs-min').addEventListener('input', applyFilters);
+      document.getElementById('subs-max').addEventListener('input', applyFilters);
+      document.getElementById('batch-filter').addEventListener('change', applyFilters);
+      
+      // Set up sorting
+      document.querySelectorAll('.sort-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.sort-button').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          currentSort = e.target.dataset.sort;
+          sortVideos();
+        });
+      });
+    }
+    
+    
+    function populateBatchFilter() {
+      const batchQueries = [...new Set(allVideos.map(v => v.batchQuery).filter(Boolean))].sort();
+      const select = document.getElementById('batch-filter');
+      
+      batchQueries.forEach(query => {
+        const option = document.createElement('option');
+        option.value = query;
+        option.textContent = query;
+        select.appendChild(option);
+      });
+    }
+    
+    function applyFilters() {
+      const searchTerm = document.getElementById('search-filter').value.toLowerCase();
+      const minViews = parseViews(document.getElementById('views-filter').value) || 0;
+      const minSubs = parseViews(document.getElementById('subs-min').value) || 0;
+      const maxSubs = parseViews(document.getElementById('subs-max').value) || Infinity;
+      const batchQuery = document.getElementById('batch-filter').value;
+      
+      // First apply filters
+      const filtered = allVideos.filter(video => {
+        const matchesSearch = !searchTerm || 
+          video.title?.toLowerCase().includes(searchTerm) ||
+          video.channel?.toLowerCase().includes(searchTerm) ||
+          video.channelHandle?.toLowerCase().includes(searchTerm);
+        
+        const matchesViews = parseViews(video.views) >= minViews;
+        const videoSubs = parseViews(video.subscribers);
+        const matchesSubs = videoSubs >= minSubs && videoSubs <= maxSubs;
+        const matchesBatch = !batchQuery || video.batchQuery === batchQuery;
+        
+        return matchesSearch && matchesViews && matchesSubs && matchesBatch;
+      });
+      
+      // Then remove duplicates based on channel handle
+      const seenHandles = new Set();
+      filteredVideos = filtered.filter(video => {
+        const handle = video.channelHandle || video.channel || 'unknown';
+        if (seenHandles.has(handle)) {
+          return false;
+        }
+        seenHandles.add(handle);
+        return true;
+      });
+      
+      sortVideos();
+    }
+    
+    function sortVideos() {
+      filteredVideos.sort((a, b) => {
+        switch (currentSort) {
+          case 'title':
+            return (a.title || '').localeCompare(b.title || '');
+          case 'channel':
+            return (a.channel || '').localeCompare(b.channel || '');
+          case 'views':
+            return parseViews(b.views) - parseViews(a.views);
+          case 'subscribers':
+            return parseViews(b.subscribers) - parseViews(a.subscribers);
+          case 'addedAt':
+            return new Date(b.addedAt || 0) - new Date(a.addedAt || 0);
+          default:
+            return 0;
+        }
+      });
+      
+      renderVideos();
+    }
+    
+    function renderVideos() {
+      const grid = document.getElementById('video-grid');
+      
+      // Update filter count
+      document.getElementById('filter-count').textContent = `${filteredVideos.length} results`;
+      
+      if (filteredVideos.length === 0) {
+        grid.innerHTML = '<div class="no-data">No videos match your filters</div>';
+        return;
+      }
+      
+      grid.innerHTML = filteredVideos.map(video => `
+        <div class="video-card">
+          <div class="video-title">
+            <a href="https://youtube.com/watch?v=${video.videoId}" target="_blank">
+              ${escapeHtml(video.title || 'Untitled')}
+            </a>
+          </div>
+          
+          <div class="channel-info">
+            <div class="channel-name">
+              ${video.channelHandle ? 
+                `<a href="https://youtube.com/${video.channelHandle}" target="_blank">${escapeHtml(video.channel || 'Unknown Channel')}</a>` : 
+                escapeHtml(video.channel || 'Unknown Channel')
+              }
+            </div>
+            ${video.channelHandle ? `<div class="channel-handle">${escapeHtml(video.channelHandle)}</div>` : ''}
+          </div>
+          
+          <div class="video-stats">
+            <div class="stat-item">
+              <span class="stat-icon">👥</span>
+              <span class="stat-value">${video.subscribers || 'N/A'}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">👁️</span>
+              <span class="stat-value">${video.views || 'N/A'}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">⏱️</span>
+              <span class="stat-value">${video.length || 'N/A'}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">📅</span>
+              <span class="stat-value">${video.uploadDate || 'N/A'}</span>
+            </div>
+          </div>
+          
+          ${video.batchQuery || video.addedAt ? `
+            <div class="video-meta">
+              ${video.batchQuery ? `<div class="batch-query">${escapeHtml(video.batchQuery)}</div>` : ''}
+              ${video.addedAt ? `<div>${new Date(video.addedAt).toLocaleDateString()}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+    
+    function parseViews(str) {
+      if (!str) return 0;
+      const num = parseFloat(str.replace(/[^\d.]/g, ''));
+      if (str.toLowerCase().includes('k')) return num * 1000;
+      if (str.toLowerCase().includes('m')) return num * 1000000;
+      if (str.toLowerCase().includes('b')) return num * 1000000000;
+      return num || 0;
+    }
+    
+    function formatNumber(num) {
+      if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+      return num.toFixed(0);
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

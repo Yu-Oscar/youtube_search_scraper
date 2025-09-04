@@ -1,0 +1,15 @@
+# Claude Code settings
+.claude/
+
+# Development files
+*.backup
+*.tmp
+test_*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archive files
+*.zip
+.claude/settings.local.json
